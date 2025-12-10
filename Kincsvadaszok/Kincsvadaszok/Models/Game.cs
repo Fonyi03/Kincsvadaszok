@@ -29,13 +29,13 @@ namespace Kincsvadaszok.Models
             if (playerNames.Count > 1) Players.Add(new Player(playerNames[1], 4, 4)); // 4,4 en kezdojatekos
         }
 
-        public void MovePlayer(int deltaX, int DeltaY)
+        public void MovePlayer(int deltaX, int deltaY)
         {
             if (IsGameOver()) return; // jatek vege utan nem lephetunk
 
             Player current = Players[Currentplayerindex];
             int newX = current.X + deltaX;
-            int newY = current.Y + DeltaY;
+            int newY = current.Y + deltaY;
 
             if (newX < 0 || newX >= GameMap.Width || newY < 0 || newY >= GameMap.Height) // pályán belül van-e?
                 return;
