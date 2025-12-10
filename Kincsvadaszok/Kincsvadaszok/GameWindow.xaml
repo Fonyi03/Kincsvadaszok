@@ -1,0 +1,23 @@
+﻿<Window x:Class="Kincsvadaszok.GameWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Kincsvadaszok"
+        mc:Ignorable="d"
+        Title="GameWindow" Height="450" Width="800">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Background="LightGray">
+            <TextBlock Text="Use Arrow Keys to Move!" FontWeight="Bold" Margin="0,0,20,0"/>
+            <TextBlock x:Name="txtStatus" Text="Position: 0,0"/>
+        </StackPanel>
+
+        <UniformGrid x:Name="GameGrid" Grid.Row="1" Rows="10" Columns="10" Background="Black" Margin="10">
+        </UniformGrid>
+    </Grid>
+</Window>

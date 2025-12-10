@@ -86,5 +86,13 @@ namespace Kincsvadaszok
                 MessageBox.Show("No saved file found!");
             }
         }
+
+        private void StartGameButton_Click(object sender, RoutedEventArgs e)
+        {
+            GameWindow gameWindow = new GameWindow();
+            gameWindow.ShowDialog();
+            RefreshList();
+
+        }
     }
 }
