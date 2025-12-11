@@ -1,5 +1,8 @@
-﻿using System.Collections.Generic;
-using System.IO; 
+﻿using Kincsvadaszok.Models;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq; // A .Sum() miatt kell!
 using System.Text.Json;
 using System.Windows;
 
@@ -7,92 +10,115 @@ namespace Kincsvadaszok
 {
     public partial class MainWindow : Window
     {
-        private List<Treasure> treasures = new List<Treasure>(); //adatot memóriában tároljuk
-        private const string FileName = "treasures.json";
+        // Csak az eredményeket tároljuk a Lobby-hoz
+        private List<GameResult> gameHistory = new List<GameResult>();
+        private const string HistoryFile = "history.json";
 
         public MainWindow()
         {
             InitializeComponent();
         }
 
-        private void AddButton_Click(object sender, RoutedEventArgs e)
+        // --- 1. A START GOMB LOGIKÁJA ---
+        private void StartGameButton_Click(object sender, RoutedEventArgs e)
         {
-            if (!string.IsNullOrWhiteSpace(txtName.Text) && int.TryParse(txtValue.Text, out int value))
+            // Nevek kiolvasása a Lobby-ból
+            string p1Name = txtP1Name.Text;
+            string p2Name = txtP2Name.Text;
+
+            // Ha üresen hagyták, adjunk alapértelmezett nevet
+            if (string.IsNullOrWhiteSpace(p1Name)) p1Name = "Player 1";
+            if (string.IsNullOrWhiteSpace(p2Name)) p2Name = "Player 2";
+
+            // Játék indítása a nevekkel
+            GameWindow gameWindow = new GameWindow(p1Name, p2Name);
+            gameWindow.ShowDialog();
+
+            // --- JÁTÉK VÉGE ---
+
+            // Adatok kinyerése
+            var p1Loot = gameWindow.LootP1 ?? new List<Treasure>();
+            var p2Loot = gameWindow.LootP2 ?? new List<Treasure>();
+
+            // Csak akkor mentünk, ha szereztek valamit
+            if (p1Loot.Count > 0 || p2Loot.Count > 0)
             {
-                Treasure newTreasure = new Treasure 
-                { 
-                    Name = txtName.Text, 
-                    Value = value 
+                // Pontszámítás
+                int score1 = p1Loot.Sum(t => t.Value);
+                int score2 = p2Loot.Sum(t => t.Value);
+
+                // Nyertes megállapítása
+                string winner;
+                if (score1 > score2) winner = p1Name;
+                else if (score2 > score1) winner = p2Name;
+                else winner = "Döntetlen";
+
+                // Eredmény objektum
+                GameResult result = new GameResult
+                {
+                    Date = DateTime.Now,
+                    P1Name = p1Name,
+                    P2Name = p2Name,
+                    P1Score = score1,
+                    P2Score = score2,
+                    WinnerName = winner
                 };
 
-                treasures.Add(newTreasure);
-                
-                RefreshList();
-                ClearInputs();
-            }
-            else
-            {
-                MessageBox.Show("Please enter a valid name and value!");
+                // Mentés a listába
+                gameHistory.Add(result);
+
+                // Képernyő frissítése
+                RefreshHistory();
             }
         }
 
-        private void RefreshList() // UI frissítésére helper metódus
+        // --- 2. LISTA FRISSÍTÉSE ---
+        private void RefreshHistory()
         {
-            lstTreasures.ItemsSource = null;
-            lstTreasures.ItemsSource = treasures;
+            lstHistory.ItemsSource = null;
+            lstHistory.ItemsSource = gameHistory;
         }
 
-        private void ClearInputs() // textboxok törlése
-        {
-            txtName.Clear();
-            txtValue.Clear();
-        }
-
-        private void SaveButton_Click(object sender, RoutedEventArgs e) //mentés gomb 
+        // --- 3. MENTÉS / BETÖLTÉS GOMBOK ---
+        private void SaveButton_Click(object sender, RoutedEventArgs e)
         {
             try
             {
                 var options = new JsonSerializerOptions { WriteIndented = true };
-                string jsonString = JsonSerializer.Serialize(treasures, options);
-
-                File.WriteAllText(FileName, jsonString);
-                MessageBox.Show("Data saved successfully!");
+                string json = JsonSerializer.Serialize(gameHistory, options);
+                File.WriteAllText(HistoryFile, json);
+                MessageBox.Show("Előzmények sikeresen mentve!");
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
-                MessageBox.Show($"Error saving data: {ex.Message}");
+                MessageBox.Show("Hiba a mentéskor: " + ex.Message);
             }
         }
 
-        private void LoadButton_Click(object sender, RoutedEventArgs e) // betöltés gomb 
+        private void LoadButton_Click(object sender, RoutedEventArgs e)
         {
-            if (File.Exists(FileName))
+            if (File.Exists(HistoryFile))
             {
                 try
                 {
-                    string jsonString = File.ReadAllText(FileName);
-                    treasures = JsonSerializer.Deserialize<List<Treasure>>(jsonString);
-
-                    RefreshList();
-                    MessageBox.Show("Data loaded successfully!");
+                    string json = File.ReadAllText(HistoryFile);
+                    gameHistory = JsonSerializer.Deserialize<List<GameResult>>(json);
+                    RefreshHistory();
+                    MessageBox.Show("Előzmények betöltve!");
                 }
-                catch (System.Exception ex)
+                catch (Exception ex)
                 {
-                     MessageBox.Show($"Error loading data: {ex.Message}");
+                    MessageBox.Show("Hiba a betöltéskor: " + ex.Message);
                 }
             }
             else
             {
-                MessageBox.Show("No saved file found!");
+                MessageBox.Show("Nincs mentett előzmény fájl.");
             }
         }
 
-        private void StartGameButton_Click(object sender, RoutedEventArgs e)
-        {
-            GameWindow gameWindow = new GameWindow();
-            gameWindow.ShowDialog();
-            RefreshList();
-
-        }
+        // Fontos: Mivel a felületről töröltük a manuális hozzáadást (AddButton_Click)
+        // és a kincses listát (lstTreasures), azokat a kódokat innen is töröltük,
+        // hogy ne okozzanak "CS0103" hibát.
     }
 }

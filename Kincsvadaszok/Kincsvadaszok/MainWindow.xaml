@@ -6,31 +6,51 @@
         xmlns:local="clr-namespace:Kincsvadaszok"
         mc:Ignorable="d"
         Title="Treasure Hunter" Height="450" Width="400">
-    <Grid Margin="10">
+    <Grid Margin="15">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/> <RowDefinition Height="*"/>    <RowDefinition Height="Auto"/> </Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
 
-        <StackPanel Grid.Row="0" Orientation="Vertical" Margin="0,0,0,10">
-            <TextBlock Text="Treasure Hunter Storage" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,10"/>
-            
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                <TextBlock Text="Name:" VerticalAlignment="Center" Margin="0,0,5,0"/>
-                <TextBox x:Name="txtName" Width="150" Margin="0,0,10,0"/>
-                
-                <TextBlock Text="Value:" VerticalAlignment="Center" Margin="0,0,5,0"/>
-                <TextBox x:Name="txtValue" Width="60" Margin="0,0,10,0"/>
-                
-                <Button Content="Add" Click="AddButton_Click" Padding="5,2"/>
+        <TextBlock Text="KINCSVADÁSZOK LOBBY" FontSize="24" FontWeight="Bold" 
+               Foreground="DarkSlateGray" HorizontalAlignment="Center" Margin="0,0,0,20"/>
+
+        <GroupBox Grid.Row="1" Header="Játékosok Beállítása" Margin="0,0,0,20" Padding="10">
+            <StackPanel>
+                <Grid Margin="0,0,0,10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0" Margin="0,0,10,0">
+                        <TextBlock Text="Játékos 1 Neve (Zöld):" FontWeight="Bold"/>
+                        <TextBox x:Name="txtP1Name" Text="Player 1" Padding="5"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="1" Margin="10,0,0,0">
+                        <TextBlock Text="Játékos 2 Neve (Kék):" FontWeight="Bold"/>
+                        <TextBox x:Name="txtP2Name" Text="Player 2" Padding="5"/>
+                    </StackPanel>
+                </Grid>
+
+                <Button Content="JÁTÉK INDÍTÁSA" Click="StartGameButton_Click" 
+                    Height="50" Background="LightGreen" FontWeight="Bold" FontSize="16" Cursor="Hand"/>
             </StackPanel>
-        </StackPanel>
+        </GroupBox>
 
-        <ListBox x:Name="lstTreasures" Grid.Row="1" Margin="0,0,0,10"/>
+        <GroupBox Grid.Row="2" Header="Korábbi Meccsek Eredményei" Margin="0,0,0,10">
+            <ListBox x:Name="lstHistory" Background="#FAFAFA" FontSize="14"/>
+        </GroupBox>
 
-        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center">
-            <Button Content="Save (JSON)" Click="SaveButton_Click" Width="100" Margin="5"/>
-            <Button Content="Load" Click="LoadButton_Click" Width="100" Margin="5"/>
-            <Button Content="Start Adventure" Click="StartGameButton_Click" 
-        Width="120" Height="40" Margin="5" Background="LightGreen" FontWeight="Bold"/>
+        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Content="Előzmények Mentése" Click="SaveButton_Click" Width="140" Margin="5"/>
+            <Button Content="Előzmények Betöltése" Click="LoadButton_Click" Width="140" Margin="5"/>
         </StackPanel>
     </Grid>
 </Window>
+    
+    
+    
