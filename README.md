@@ -1,34 +1,42 @@
-# Kincsvadászok (Treasure Hunter)
+# Kincsvadászok (Treasure Hunters)
 
-WPF alapú asztali alkalmazás, amely egy kincskereső kalandjátékot és a megszerzett kincsek menedzselését valósítja meg. A projekt célja a C# és WPF technológiák, valamint a fájlkezelés (JSON) demonstrálása.
+WPF alapú, helyi többjátékos (local multiplayer) stratégiai játék, ahol két játékos verseng a kincsek összegyűjtéséért egy négyzethálós pályán. A projekt demonstrálja a C# és WPF technológiák használatát, a JSON alapú adatkezelést, valamint az automatizált tesztelést (Unit Testing).
 
 ## 🚀 Funkciók
 
-### Jelenlegi állapot (v0.1)
-- **Kincstár Kezelő (Inventory):**
-  - Kincsek manuális felvétele (Név és Érték megadásával).
-  - Lista nézet a memóriában lévő tárgyakról.
-- **Adatkezelés:**
-  - Perzisztens adattárolás JSON formátumban.
-  - Mentés (`Save`) és Betöltés (`Load`) funkciók.
-- **Játékfelület:**
-  - Külön ablakos játéktér indítása a főmenüből.
-  - Felkészítve a rács alapú (Grid) mozgásra.
+### Játékmenet
+- **Lobby Rendszer:** A játékosok megadhatják a nevüket a játék kezdete előtt.
+- **Kétjátékos Mód:** Körökre osztott játékmenet (Turn-based) közös billentyűzeten.
+- **Dinamikus Pálya:** Véletlenszerűen generált kincsek a térképen.
+- **Pontozás:** A győzelem az összegyűjtött kincsek **értéke** alapján dől el (nem csak a darabszám számít!).
 
-### 📅 Tervezett fejlesztések (Roadmap)
-- [ ] Játékos mozgatása a pályán (nyilakkal).
-- [ ] Kincsek véletlenszerű generálása a térképen.
-- [ ] Ütközésdetektálás (játékos vs. kincs).
-- [ ] Statisztikák megjelenítése (Összérték számítása).
-- [ ] DataGrid nézet bevezetése a részletesebb megjelenítéshez.
+### Adatkezelés & Architektúra
+- **Match History:** A lejátszott meccsek eredményeinek (Dátum, Nyertes, Pontszámok) automatikus mentése `history.json` fájlba.
+- **JSON Serializáció:** `System.Text.Json` használata az adatok perzisztens tárolásához.
+- **Unit Tesztek:** Külön projekt (`Kincsvadaszok.Tests`) a logika ellenőrzésére (MSTest keretrendszer).
+
+## 🎮 Így játssz
+1. Írd be a **Játékos 1** (Zöld) és **Játékos 2** (Kék) nevét a főképernyőn.
+2. Kattints a **JÁTÉK INDÍTÁSA** gombra.
+3. Használd a **Nyilakat** (Arrow Keys) a mozgáshoz.
+   - A játék kiírja, kinek a köre következik.
+   - Lépj rá a sárga mezőkre a kincsek felvételéhez.
+4. Ha az összes kincs elfogyott, a játék véget ér, és kihirdeti a győztest.
+5. Az eredmény bekerül a főképernyőn látható listába.
 
 ## 🛠 Technológiák
 - **Nyelv:** C# (.NET 6/8)
-- **Keretrendszer:** WPF (Windows Presentation Foundation)
-- **Adattárolás:** System.Text.Json
-- **Környezet:** Visual Studio 2022 / VS Code
+- **UI:** WPF (Windows Presentation Foundation) - XAML
+- **Tesztelés:** MSTest Framework
+- **Környezet:** Visual Studio 2022
 
-## atk Telepítés és Futtatás
-1. A repository klónozása:
-   ```bash
-   git clone [https://github.com/Fonyi03/Kincsvadaszok.git](https://github.com/Fonyi03/Kincsvadaszok.git)
+## 🧪 Tesztelés
+A projekt tartalmaz egy külön teszt projektet, amely ellenőrzi:
+- A kincsek létrehozását.
+- A győzelmi logika és pontszámítás helyességét.
+- Az eredmények szöveges formázását.
+
+Futtatás Visual Studio-ban: `Test` -> `Run All Tests`.
+
+## 👤 Szerző
+FTP Server Room
