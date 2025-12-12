@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 
 namespace Kincsvadaszok
 {
@@ -34,7 +35,13 @@ namespace Kincsvadaszok
 
         //Játékos nevek 
         private string name1;
-        private string name2; 
+        private string name2;
+
+        private ImageBrush player1Img;
+        private ImageBrush player2Img;
+        private ImageBrush lootImg;
+        private ImageBrush floorImg;
+        private ImageBrush wallImg;
 
         public GameWindow(string p1Name, string p2Name)
         {
@@ -42,6 +49,7 @@ namespace Kincsvadaszok
             this.name2 = p2Name;
 
             InitializeComponent();
+            LoadImages();
 
             InitializeMap();
             SpawnObstacles();
@@ -55,6 +63,42 @@ namespace Kincsvadaszok
             this.Focus();
         }
 
+        private void LoadImages()
+        {
+            try
+            {
+                // Try absolute pack URI first
+                var uri1 = new Uri("pack://application:,,,/Images/player1.png", UriKind.Absolute);
+                player1Img = new ImageBrush(new BitmapImage(uri1));
+                var uri2 = new Uri("pack://application:,,,/Images/player2.png",UriKind.Absolute);
+                player2Img = new ImageBrush(new BitmapImage(uri2));
+                var uri3 = new Uri("pack://application:,,,/Images/loot.png",UriKind.Absolute);
+                lootImg = new ImageBrush(new BitmapImage(uri3));
+                var uri4 = new Uri("pack://application:,,,/Images/cobblestone.jpg",UriKind.Absolute);
+                floorImg = new ImageBrush(new BitmapImage(uri4));
+                GameGrid.Background = floorImg;
+                var uri5 = new Uri("pack://application:,,,/Images/wall.jpg",UriKind.Absolute);
+                wallImg = new ImageBrush(new BitmapImage(uri5));
+            }
+            catch
+            {
+                // Fallback: try relative path
+                try
+                {
+                    var uri1 = new Uri("/Images/player1.png", UriKind.Relative);
+                    player1Img = new ImageBrush(new BitmapImage(uri1));
+                    var uri2 = new Uri("/Images/player2.png",UriKind.Relative);
+                    player2Img = new ImageBrush(new BitmapImage(uri2));
+                    var uri3 = new Uri("Images/loot.png",UriKind.Relative);
+                    lootImg = new ImageBrush(new BitmapImage(uri3));
+                }
+                catch
+                {
+                    MessageBox.Show("Hiba a képek betöltésekor! Ellenőrizd, hogy az Images/player1.png létezik a projektben, és a Build Action 'Resource' értékre van állítva.");
+                }
+            }
+        }
+
         private void InitializeMap()
         {
             mapCells = new Border[MapSize, MapSize];
@@ -66,9 +110,7 @@ namespace Kincsvadaszok
                 {
                     Border cell = new Border
                     {
-                        Background = Brushes.Black,
-                        BorderBrush = Brushes.Gray,
-                        BorderThickness = new Thickness(0.5)
+                        Background = Brushes.Transparent
                     };
                     GameGrid.Children.Add(cell);
                     mapCells[y, x] = cell;
@@ -187,25 +229,35 @@ namespace Kincsvadaszok
             {
                 for (int x = 0; x < MapSize; x++)
                 {
-                    // Alap: Fekete
-                    Brush color = Brushes.Black;
+                    // 1. ALAPÉRTELMEZÉS: A padló képe (ha van), különben fekete
+                    Brush finalBrush = Brushes.Transparent;
 
-                    // Ha kincs van ott: Arany
-                    if (treasureLocations.ContainsKey((x, y)))
-                        color = Brushes.Gold;
-
+                    // 2. FAL (felülírja a padlót)
                     if (obstacleLocations.Contains((x, y)))
-                        color = Brushes.DarkSlateGray;
+                    {
+                        finalBrush = wallImg;
+                    }
 
-                    // Ha P1 (Zöld) áll ott
+                    // 3. KINCS (felülírja a padlót)
+                    if (treasureLocations.ContainsKey((x, y)))
+                    {
+                        finalBrush = (Brush)lootImg ?? Brushes.Gold;
+                    }
+
+                    // 4. JÁTÉKOS 1 (felülír mindent)
                     if (x == p1X && y == p1Y)
-                        color = Brushes.LimeGreen;
+                    {
+                        finalBrush = (Brush)player1Img ?? Brushes.LimeGreen;
+                    }
 
-                    // Ha P2 (Kék) áll ott
+                    // 5. JÁTÉKOS 2 (felülír mindent)
                     if (x == p2X && y == p2Y)
-                        color = Brushes.Cyan;
+                    {
+                        finalBrush = (Brush)player2Img ?? Brushes.Cyan;
+                    }
 
-                    mapCells[y, x].Background = color;
+                    // VÉGSŐ RENDERELÉS
+                    mapCells[y, x].Background = finalBrush;
                 }
             }
         }

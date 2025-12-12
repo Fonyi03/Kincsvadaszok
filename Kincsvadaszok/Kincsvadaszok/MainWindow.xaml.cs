@@ -5,6 +5,8 @@ using System.IO;
 using System.Linq; // A .Sum() miatt kell!
 using System.Text.Json;
 using System.Windows;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
 
 namespace Kincsvadaszok
 {
@@ -117,8 +119,5 @@ namespace Kincsvadaszok
             }
         }
 
-        // Fontos: Mivel a felületről töröltük a manuális hozzáadást (AddButton_Click)
-        // és a kincses listát (lstTreasures), azokat a kódokat innen is töröltük,
-        // hogy ne okozzanak "CS0103" hibát.
     }
 }

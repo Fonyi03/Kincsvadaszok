@@ -5,6 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Kincsvadaszok"
         mc:Ignorable="d"
+        Icon="Images/loot.png"
         Title="Treasure Hunter" Height="450" Width="400">
     <Grid Margin="15">
         <Grid.RowDefinitions>
