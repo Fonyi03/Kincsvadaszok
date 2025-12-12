@@ -11,6 +11,7 @@ namespace Kincsvadaszok
     {
         private const int MapSize = 10;
         private const int NumberOfTreasures = 10; // Több kincs, hogy legyen verseny!
+        private const int NumberOfObstacles = 15;
 
         // Játékos 1 (Zöld) - Bal felső sarok
         private int p1X = 0;
@@ -28,6 +29,7 @@ namespace Kincsvadaszok
         // Pálya elemek
         private Border[,] mapCells;
         private Dictionary<(int, int), Treasure> treasureLocations = new Dictionary<(int, int), Treasure>();
+        private HashSet<(int, int)> obstacleLocations = new HashSet<(int, int)>();
         private Random random = new Random();
 
         //Játékos nevek 
@@ -42,6 +44,7 @@ namespace Kincsvadaszok
             InitializeComponent();
 
             InitializeMap();
+            SpawnObstacles();
             SpawnTreasures();
 
             // Kezdő állapot kirajzolása
@@ -81,10 +84,10 @@ namespace Kincsvadaszok
                 int rx = random.Next(MapSize);
                 int ry = random.Next(MapSize);
 
-                // Nem rakhatjuk a sarkokba (start pozíciók) és ahol már van
                 bool isCorner = (rx == 0 && ry == 0) || (rx == MapSize - 1 && ry == MapSize - 1);
 
-                if (!isCorner && !treasureLocations.ContainsKey((rx, ry)))
+                // MÓDOSÍTVA: Csak akkor rakjuk le, ha nincs ott FAL sem!
+                if (!isCorner && !treasureLocations.ContainsKey((rx, ry)) && !obstacleLocations.Contains((rx, ry)))
                 {
                     Treasure t = new Treasure
                     {
@@ -94,6 +97,25 @@ namespace Kincsvadaszok
                     treasureLocations.Add((rx, ry), t);
                     count++;
                 }
+            }
+        }
+
+        private void SpawnObstacles() // Falak lerakása
+        {
+            int count = 0;
+            while (count < NumberOfObstacles)
+            {
+                int rx = random.Next(MapSize);
+                int ry = random.Next(MapSize);
+
+                bool isStartPos = (rx == 0 && ry == 0) || (rx == MapSize - 1 && ry == MapSize - 1); //startpoziciokra nem rakunk falat 
+
+                if (!isStartPos && !obstacleLocations.Contains((rx, ry))) //ha nem startpozi és még nincsen ott fal 
+                {
+                    obstacleLocations.Add((rx, ry));
+                    count++;
+                }
+
             }
         }
 
@@ -116,6 +138,11 @@ namespace Kincsvadaszok
                 case Key.Right: if (currentX < MapSize - 1) newX++; break;
                 case Key.Escape: this.Close(); return;
                 default: return; // Ha nem nyíl, nem történik semmi
+            }
+
+            if (obstacleLocations.Contains((newX, newY)))
+            {
+                return;
             }
 
             // Ha nem mozdult (falnak ment), akkor nem váltunk kört, próbálja újra
@@ -153,7 +180,6 @@ namespace Kincsvadaszok
             CheckGameOver();
         }
 
-        // --- GRAFIKA FRISSÍTÉSE ---
         // Ez a függvény felelős azért, hogy minden kocka a megfelelő színű legyen
         private void RenderMap()
         {
@@ -167,6 +193,9 @@ namespace Kincsvadaszok
                     // Ha kincs van ott: Arany
                     if (treasureLocations.ContainsKey((x, y)))
                         color = Brushes.Gold;
+
+                    if (obstacleLocations.Contains((x, y)))
+                        color = Brushes.DarkSlateGray;
 
                     // Ha P1 (Zöld) áll ott
                     if (x == p1X && y == p1Y)
