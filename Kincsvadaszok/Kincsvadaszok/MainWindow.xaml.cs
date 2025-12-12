@@ -15,6 +15,7 @@ namespace Kincsvadaszok
         // Csak az eredményeket tároljuk a Lobby-hoz
         private List<GameResult> gameHistory = new List<GameResult>();
         private const string HistoryFile = "history.json";
+        private string currentSavePath = null;
 
         public MainWindow()
         {
@@ -84,16 +85,43 @@ namespace Kincsvadaszok
         // --- 3. MENTÉS / BETÖLTÉS GOMBOK ---
         private void SaveButton_Click(object sender, RoutedEventArgs e)
         {
+            // 1. Ha még nincs kiválasztva mentési hely, nyissuk meg a tallózót
+            if (string.IsNullOrEmpty(currentSavePath))
+            {
+                Microsoft.Win32.SaveFileDialog saveFileDialog = new Microsoft.Win32.SaveFileDialog();
+
+                // Beállítások: csak .json fájlokat mutasson, és ez legyen az alap
+                saveFileDialog.Filter = "JSON fájlok (*.json)|*.json|Minden fájl (*.*)|*.*";
+                saveFileDialog.DefaultExt = ".json";
+                saveFileDialog.FileName = "eredmenyek"; // Alapértelmezett fájlnév
+
+                // Megnyitjuk az ablakot. Ha a felhasználó rányom a "Mentés"-re (true)
+                if (saveFileDialog.ShowDialog() == true)
+                {
+                    // ELMENTJÜK az útvonalat a memóriába
+                    currentSavePath = saveFileDialog.FileName;
+                }
+                else
+                {
+                    // Ha a Mégse gombra nyomott, nem csinálunk semmit
+                    return;
+                }
+            }
+
+            // 2. Mentés a (már biztosan létező) útvonalra
             try
             {
                 var options = new JsonSerializerOptions { WriteIndented = true };
                 string json = JsonSerializer.Serialize(gameHistory, options);
-                File.WriteAllText(HistoryFile, json);
-                MessageBox.Show("Előzmények sikeresen mentve!");
+
+                File.WriteAllText(currentSavePath, json);
+                MessageBox.Show($"Sikeres mentés ide:\n{currentSavePath}");
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Hiba a mentéskor: " + ex.Message);
+                MessageBox.Show("Hiba történt a mentéskor: " + ex.Message);
+                // Ha hiba volt (pl. írásvédett hely), töröljük az útvonalat, hogy legközelebb újra kérdezze
+                currentSavePath = null;
             }
         }
 
