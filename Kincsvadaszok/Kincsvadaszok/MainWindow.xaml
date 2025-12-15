@@ -39,6 +39,8 @@
 
                 <Button Content="JÁTÉK INDÍTÁSA" Click="StartGameButton_Click" 
                     Height="50" Background="LightGreen" FontWeight="Bold" FontSize="16" Cursor="Hand"/>
+                <Button Content="JÁTÉK FOLYTATÁSA" Click="LoadGameButton_Click" 
+                    Height="40" Margin="0,10,0,0" Background="LightBlue"/>
             </StackPanel>
         </GroupBox>
 

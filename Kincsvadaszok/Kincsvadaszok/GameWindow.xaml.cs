@@ -1,18 +1,25 @@
-﻿using System;
+﻿using Kincsvadaszok.Models;
+using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Xml.Linq;
 
 namespace Kincsvadaszok
 {
+    
     public partial class GameWindow : Window
     {
+  
         private const int MapSize = 10;
         private const int NumberOfTreasures = 10; // Több kincs, hogy legyen verseny!
         private const int NumberOfObstacles = 15;
+        private bool isGameFinished = false;
+
 
         // Játékos 1 (Zöld) - Bal felső sarok
         private int p1X = 0;
@@ -61,6 +68,116 @@ namespace Kincsvadaszok
 
             this.KeyDown += GameWindow_KeyDown;
             this.Focus();
+        }
+        public GameWindow(SavedGame state)
+        {
+            InitializeComponent();
+            LoadImages(); // Képek betöltése
+
+            // Adatok visszaállítása
+            name1 = state.P1Name;
+            name2 = state.P2Name;
+            p1X = state.P1X; p1Y = state.P1Y;
+            p2X = state.P2X; p2Y = state.P2Y;
+            isPlayer1Turn = state.IsPlayer1Turn;
+            LootP1 = state.LootP1;
+            LootP2 = state.LootP2;
+
+            InitializeMap(); // Üres rács létrehozása
+
+            // Kincsek visszapakolása
+            treasureLocations.Clear();
+            foreach (var t in state.TreasureOnMap)
+            {
+                treasureLocations.Add((t.X, t.Y), t.Item);
+            }
+
+            // Falak visszapakolása
+            obstacleLocations.Clear();
+            foreach (var o in state.ObstaclesOnMap)
+            {
+                obstacleLocations.Add((o.X, o.Y));
+            }
+
+            // Kirajzolás
+            RenderMap();
+            UpdateStatus();
+
+            this.KeyDown += GameWindow_KeyDown;
+            this.Focus();
+        }
+
+        protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
+        {
+            if (!isGameFinished)
+            {
+                var result = MessageBox.Show(
+                    "A játék még folyamatban van! Szeretnéd menteni kilépés előtt?",
+                    "Játék mentése",
+                    MessageBoxButton.YesNoCancel,
+                    MessageBoxImage.Question);
+
+                if (result == MessageBoxResult.Cancel)
+                {
+                    e.Cancel = true;
+                    return;
+                }
+
+                if (result == MessageBoxResult.Yes)
+                {
+                    SaveCurrentGame();
+                }
+            }
+            base.OnClosing(e);
+        }
+
+        private void SaveCurrentGame()
+        {
+            //adatok osszegyujtese objektumba
+            SavedGame state = new SavedGame 
+            { 
+                P1Name = name1, P2Name = name2,
+                P1X = p1X, P1Y = p1Y,
+                P2X = p2X, P2Y = p2Y,
+                IsPlayer1Turn = isPlayer1Turn,
+                LootP1 = LootP1, LootP2 = LootP2,
+                TreasureOnMap = new List<TreasureData>(),
+                ObstaclesOnMap = new List<PointData>()
+            };
+
+            //szotarat listava alakitunk hogy mentheto legyen
+            foreach (var kvp in treasureLocations)
+            {
+                state.TreasureOnMap.Add(new TreasureData{
+                    X = kvp.Key.Item1,
+                    Y = kvp.Key.Item2,
+                    Item = kvp.Value
+                });
+            }
+
+            //falakat is listava
+            foreach (var obs in obstacleLocations)
+            {
+                state.ObstaclesOnMap.Add(new PointData { X = obs.Item1, Y = obs.Item2});
+            }
+
+            Microsoft.Win32.SaveFileDialog sfd = new Microsoft.Win32.SaveFileDialog();
+            sfd.Filter = "Kincsvadászok mentés (*.sav)|*.sav";
+            sfd.FileName =  $"mentes_{DateTime.Now:MMdd_HHmm}";
+
+            if (sfd.ShowDialog() == true)
+            {
+                try
+                {
+                    string json = System.Text.Json.JsonSerializer.Serialize(state);
+                    System.IO.File.WriteAllText(sfd.FileName, json);
+                    MessageBox.Show("Sikeres mentés!");
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Hiba mentéskor: " + ex.Message);
+                }
+            }
         }
 
         private void LoadImages()
@@ -277,6 +394,7 @@ namespace Kincsvadaszok
         {
             if (treasureLocations.Count == 0)
             {
+                isGameFinished = true;
                 // Kényszerített frissítés a legutolsó lépés kirajzolásához
                 Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.Render);
 

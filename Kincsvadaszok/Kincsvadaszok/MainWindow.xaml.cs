@@ -147,5 +147,25 @@ namespace Kincsvadaszok
             }
         }
 
+        private void LoadGameButton_Click(object sender, RoutedEventArgs e)
+        {
+            Microsoft.Win32.OpenFileDialog ofd = new Microsoft.Win32.OpenFileDialog();
+            ofd.Filter = "Kincsvadászok mentés (*sav)|*sav";
+
+            if (ofd.ShowDialog() == true)
+            {
+                try
+                {
+                    string json = File.ReadAllText(ofd.FileName);
+                    SavedGame state = JsonSerializer.Deserialize<SavedGame>(json);
+
+                    GameWindow gameWindow = new GameWindow(state);
+                    gameWindow.ShowDialog();
+                } catch (Exception ex)
+                {
+                    MessageBox.Show("Hiba a játék betöltésekor: "+ ex.Message);
+                }
+            }
+        }
     }
 }
