@@ -25,38 +25,37 @@ namespace Kincsvadaszok
         // --- 1. A START GOMB LOGIKÁJA ---
         private void StartGameButton_Click(object sender, RoutedEventArgs e)
         {
-            // Nevek kiolvasása a Lobby-ból
             string p1Name = txtP1Name.Text;
             string p2Name = txtP2Name.Text;
 
-            // Ha üresen hagyták, adjunk alapértelmezett nevet
             if (string.IsNullOrWhiteSpace(p1Name)) p1Name = "Player 1";
             if (string.IsNullOrWhiteSpace(p2Name)) p2Name = "Player 2";
 
-            // Játék indítása a nevekkel
             GameWindow gameWindow = new GameWindow(p1Name, p2Name);
             gameWindow.ShowDialog();
 
             // --- JÁTÉK VÉGE ---
 
-            // Adatok kinyerése
             var p1Loot = gameWindow.LootP1 ?? new List<Treasure>();
             var p2Loot = gameWindow.LootP2 ?? new List<Treasure>();
 
-            // Csak akkor mentünk, ha szereztek valamit
-            if (p1Loot.Count > 0 || p2Loot.Count > 0)
+            // MÓDOSÍTÁS 1: Akkor is mentsünk, ha Lépéslimit miatt lett vége (még ha 0 kincs is van)
+            if (p1Loot.Count > 0 || p2Loot.Count > 0 || gameWindow.IsDrawBySteps)
             {
-                // Pontszámítás
                 int score1 = p1Loot.Sum(t => t.Value);
                 int score2 = p2Loot.Sum(t => t.Value);
 
-                // Nyertes megállapítása
                 string winner;
-                if (score1 > score2) winner = p1Name;
+
+                // MÓDOSÍTÁS 2: Először megnézzük, hogy lépéslimit volt-e
+                if (gameWindow.IsDrawBySteps)
+                {
+                    winner = "Döntetlen (Lépéslimit)";
+                }
+                else if (score1 > score2) winner = p1Name;
                 else if (score2 > score1) winner = p2Name;
                 else winner = "Döntetlen";
 
-                // Eredmény objektum
                 GameResult result = new GameResult
                 {
                     Date = DateTime.Now,
@@ -67,11 +66,20 @@ namespace Kincsvadaszok
                     WinnerName = winner
                 };
 
-                // Mentés a listába
                 gameHistory.Add(result);
-
-                // Képernyő frissítése
                 RefreshHistory();
+
+                // (Opcionális: Itt volt az automata mentés logikája, ha azt is használod)
+                if (!string.IsNullOrEmpty(currentSavePath))
+                {
+                    try
+                    {
+                        var options = new System.Text.Json.JsonSerializerOptions { WriteIndented = true };
+                        string json = System.Text.Json.JsonSerializer.Serialize(gameHistory, options);
+                        System.IO.File.WriteAllText(currentSavePath, json);
+                    }
+                    catch { }
+                }
             }
         }
 

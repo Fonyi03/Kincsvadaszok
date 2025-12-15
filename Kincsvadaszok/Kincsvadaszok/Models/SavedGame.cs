@@ -28,6 +28,7 @@ namespace Kincsvadaszok.Models
         public int P1Y { get; set; }
         public int P2X { get; set; }
         public int P2Y { get; set; }
+        public int TotalSteps { get; set; }
 
         //Kinel vannak a kincsek 
         public List<Treasure> LootP1 { get; set; }

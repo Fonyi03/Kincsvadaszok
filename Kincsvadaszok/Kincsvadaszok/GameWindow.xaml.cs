@@ -19,6 +19,10 @@ namespace Kincsvadaszok
         private const int NumberOfTreasures = 10; // Több kincs, hogy legyen verseny!
         private const int NumberOfObstacles = 15;
         private bool isGameFinished = false;
+        private int totalSteps = 0;
+        private const int MaxSteps = 100;
+
+        public bool IsDrawBySteps { get; set; } = false;
 
 
         // Játékos 1 (Zöld) - Bal felső sarok
@@ -82,6 +86,7 @@ namespace Kincsvadaszok
             isPlayer1Turn = state.IsPlayer1Turn;
             LootP1 = state.LootP1;
             LootP2 = state.LootP2;
+            totalSteps = state.TotalSteps;
 
             InitializeMap(); // Üres rács létrehozása
 
@@ -134,15 +139,16 @@ namespace Kincsvadaszok
         private void SaveCurrentGame()
         {
             //adatok osszegyujtese objektumba
-            SavedGame state = new SavedGame 
-            { 
+            SavedGame state = new SavedGame
+            {
                 P1Name = name1, P2Name = name2,
                 P1X = p1X, P1Y = p1Y,
                 P2X = p2X, P2Y = p2Y,
                 IsPlayer1Turn = isPlayer1Turn,
                 LootP1 = LootP1, LootP2 = LootP2,
                 TreasureOnMap = new List<TreasureData>(),
-                ObstaclesOnMap = new List<PointData>()
+                ObstaclesOnMap = new List<PointData>(),
+                TotalSteps = totalSteps
             };
 
             //szotarat listava alakitunk hogy mentheto legyen
@@ -281,6 +287,12 @@ namespace Kincsvadaszok
         // --- MOZGÁS ÉS KÖRÖK KEZELÉSE ---
         private void GameWindow_KeyDown(object sender, KeyEventArgs e)
         {
+            if (e.Key == Key.Escape)
+            {
+                this.Close();
+                return;
+            }
+
             // Meghatározzuk, ki a soros, és hol áll most
             int currentX = isPlayer1Turn ? p1X : p2X;
             int currentY = isPlayer1Turn ? p1Y : p2Y;
@@ -289,14 +301,28 @@ namespace Kincsvadaszok
             int newX = currentX;
             int newY = currentY;
 
-            switch (e.Key)
+            if (isPlayer1Turn)
             {
-                case Key.Up: if (currentY > 0) newY--; break;
-                case Key.Down: if (currentY < MapSize - 1) newY++; break;
-                case Key.Left: if (currentX > 0) newX--; break;
-                case Key.Right: if (currentX < MapSize - 1) newX++; break;
-                case Key.Escape: this.Close(); return;
-                default: return; // Ha nem nyíl, nem történik semmi
+                switch (e.Key)
+                {
+                    case Key.W: if (currentY > 0) newY--; break;
+                    case Key.S: if (currentY < MapSize - 1) newY++; break;
+                    case Key.A: if (currentX > 0) newX--; break;
+                    case Key.D: if (currentX < MapSize - 1) newX++; break;
+                    default: return; // Ha P1 más gombot nyom (pl. nyilat), nem történik semmi
+                }
+            }
+            else
+            {
+                // JÁTÉKOS 2 (Kék) -> CSAK NYILAK
+                switch (e.Key)
+                {
+                    case Key.Up: if (currentY > 0) newY--; break;
+                    case Key.Down: if (currentY < MapSize - 1) newY++; break;
+                    case Key.Left: if (currentX > 0) newX--; break;
+                    case Key.Right: if (currentX < MapSize - 1) newX++; break;
+                    default: return; // Ha P2 más gombot nyom (pl. WASD), nem történik semmi
+                }
             }
 
             if (obstacleLocations.Contains((newX, newY)))
@@ -326,6 +352,19 @@ namespace Kincsvadaszok
                 else LootP2.Add(found);
 
                 treasureLocations.Remove((newX, newY));
+            }
+
+            totalSteps++;
+
+            if (totalSteps >= MaxSteps)
+            {
+                isGameFinished = true;
+                IsDrawBySteps = true;
+
+                RenderMap();
+                UpdateStatus();
+
+                MessageBox.Show($"Lépéslimit {MaxSteps} elérve, a játék döntetelen!");
             }
 
             // 3. Kör váltása (P1 -> P2, vagy P2 -> P1)
@@ -381,12 +420,11 @@ namespace Kincsvadaszok
 
         private void UpdateStatus()
         {
-            // Itt használjuk a neveket a "Player 1" helyett!
             string turnName = isPlayer1Turn ? $"{name1} (Zöld)" : $"{name2} (Kék)";
-
             if (txtStatus != null)
             {
-                txtStatus.Text = $"KÖVETKEZIK: {turnName} | {name1}: {LootP1.Count} db | {name2}: {LootP2.Count} db | Pályán: {treasureLocations.Count}";
+                // Hozzáadtuk a végére a lépésszámlálót
+                txtStatus.Text = $"KÖVETKEZIK: {turnName} | {name1}: {LootP1.Count} | {name2}: {LootP2.Count} | Pályán: {treasureLocations.Count} | LÉPÉSEK: {totalSteps}/{MaxSteps}";
             }
         }
 
