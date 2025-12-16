@@ -11,74 +11,79 @@ using System.Xml.Linq;
 
 namespace Kincsvadaszok
 {
-    
+
     public partial class GameWindow : Window
     {
-  
+        // a palya meretei es a jatek szabalyai
         private const int MapSize = 10;
-        private const int NumberOfTreasures = 10; // Több kincs, hogy legyen verseny!
+        private const int NumberOfTreasures = 10; // tobb kincs, hogy legyen verseny!
         private const int NumberOfObstacles = 15;
-        private bool isGameFinished = false;
+        private bool isGameFinished = false; // ez jelzi ha vege van h ne kerdezzen ra a mentesre
         private int totalSteps = 0;
         private const int MaxSteps = 100;
 
+        // ezt nezi a mainwindow h dontetlen lett e a lepesek miatt
         public bool IsDrawBySteps { get; set; } = false;
 
 
-        // Játékos 1 (Zöld) - Bal felső sarok
+        // jatekos 1 (zold) - bal felso sarok
         private int p1X = 0;
         private int p1Y = 0;
-        public List<Treasure> LootP1 { get; private set; } = new List<Treasure>();
+        public List<Treasure> LootP1 { get; private set; } = new List<Treasure>(); // itt gyujti a kincseit
 
-        // Játékos 2 (Kék) - Jobb alsó sarok
+        // jatekos 2 (kek) - jobb also sarok
         private int p2X = MapSize - 1;
         private int p2Y = MapSize - 1;
         public List<Treasure> LootP2 { get; private set; } = new List<Treasure>();
 
-        // Körkezelés
-        private bool isPlayer1Turn = true; // Kezdésnek P1 jön
+        // korkezeles
+        private bool isPlayer1Turn = true; // kezdesnek p1 jon
 
-        // Pálya elemek
-        private Border[,] mapCells;
-        private Dictionary<(int, int), Treasure> treasureLocations = new Dictionary<(int, int), Treasure>();
-        private HashSet<(int, int)> obstacleLocations = new HashSet<(int, int)>();
+        // palya elemek tarolasa
+        private Border[,] mapCells; // ez a vizualis racs
+        private Dictionary<(int, int), Treasure> treasureLocations = new Dictionary<(int, int), Treasure>(); // hol vannak a kincsek
+        private HashSet<(int, int)> obstacleLocations = new HashSet<(int, int)>(); // hol vannak a falak
         private Random random = new Random();
 
-        //Játékos nevek 
+        // jatekos nevek 
         private string name1;
         private string name2;
 
+        // kepek tarolasa h ne kelljen mindig ujratolteni oket
         private ImageBrush player1Img;
         private ImageBrush player2Img;
         private ImageBrush lootImg;
         private ImageBrush floorImg;
         private ImageBrush wallImg;
 
+        // alap konstruktor amikor uj jatekot inditunk
         public GameWindow(string p1Name, string p2Name)
         {
             this.name1 = p1Name;
             this.name2 = p2Name;
 
             InitializeComponent();
-            LoadImages();
+            LoadImages(); // kepek betoltese
 
-            InitializeMap();
-            SpawnObstacles();
-            SpawnTreasures();
+            InitializeMap(); // palya felepitese
+            SpawnObstacles(); // akadalyok lerakasa
+            SpawnTreasures(); // kincsek lerakasa
 
-            // Kezdő állapot kirajzolása
+            // kezdo allapot kirajzolasa
             RenderMap();
             UpdateStatus();
 
-            this.KeyDown += GameWindow_KeyDown;
+            this.KeyDown += GameWindow_KeyDown; // gombnyomas figyeles
             this.Focus();
         }
+
+        // ez a konstruktor tolti be a mentett allast
         public GameWindow(SavedGame state)
         {
             InitializeComponent();
-            LoadImages(); // Képek betöltése
+            LoadImages(); // kepek betoltese
 
-            // Adatok visszaállítása
+            // adatok visszaallitasa a mentesbol
             name1 = state.P1Name;
             name2 = state.P2Name;
             p1X = state.P1X; p1Y = state.P1Y;
@@ -86,25 +91,25 @@ namespace Kincsvadaszok
             isPlayer1Turn = state.IsPlayer1Turn;
             LootP1 = state.LootP1;
             LootP2 = state.LootP2;
-            totalSteps = state.TotalSteps;
+            totalSteps = state.TotalSteps; // a lepeseket is visszaallitjuk
 
-            InitializeMap(); // Üres rács létrehozása
+            InitializeMap(); // ures racs letrehozasa
 
-            // Kincsek visszapakolása
+            // kincsek visszapakolasa a regi helyukre
             treasureLocations.Clear();
             foreach (var t in state.TreasureOnMap)
             {
                 treasureLocations.Add((t.X, t.Y), t.Item);
             }
 
-            // Falak visszapakolása
+            // falak visszapakolasa
             obstacleLocations.Clear();
             foreach (var o in state.ObstaclesOnMap)
             {
                 obstacleLocations.Add((o.X, o.Y));
             }
 
-            // Kirajzolás
+            // kirajzolas
             RenderMap();
             UpdateStatus();
 
@@ -112,6 +117,7 @@ namespace Kincsvadaszok
             this.Focus();
         }
 
+        // ha bezarjuk az ablakot es meg megy a jatek akkor rakerdez h mentsunk e
         protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
         {
             if (!isGameFinished)
@@ -124,57 +130,65 @@ namespace Kincsvadaszok
 
                 if (result == MessageBoxResult.Cancel)
                 {
-                    e.Cancel = true;
+                    e.Cancel = true; // megsem lepunk ki
                     return;
                 }
 
                 if (result == MessageBoxResult.Yes)
                 {
-                    SaveCurrentGame();
+                    SaveCurrentGame(); // mentjuk a jatekot
                 }
             }
             base.OnClosing(e);
         }
 
+        // ez vegzi a mentes logikajat json fajlba
         private void SaveCurrentGame()
         {
-            //adatok osszegyujtese objektumba
+            // adatok osszegyujtese objektumba
             SavedGame state = new SavedGame
             {
-                P1Name = name1, P2Name = name2,
-                P1X = p1X, P1Y = p1Y,
-                P2X = p2X, P2Y = p2Y,
+                P1Name = name1,
+                P2Name = name2,
+                P1X = p1X,
+                P1Y = p1Y,
+                P2X = p2X,
+                P2Y = p2Y,
                 IsPlayer1Turn = isPlayer1Turn,
-                LootP1 = LootP1, LootP2 = LootP2,
+                LootP1 = LootP1,
+                LootP2 = LootP2,
                 TreasureOnMap = new List<TreasureData>(),
                 ObstaclesOnMap = new List<PointData>(),
                 TotalSteps = totalSteps
             };
 
-            //szotarat listava alakitunk hogy mentheto legyen
+            // szotarat listava alakitunk hogy mentheto legyen
             foreach (var kvp in treasureLocations)
             {
-                state.TreasureOnMap.Add(new TreasureData{
+                state.TreasureOnMap.Add(new TreasureData
+                {
                     X = kvp.Key.Item1,
                     Y = kvp.Key.Item2,
                     Item = kvp.Value
                 });
             }
 
-            //falakat is listava
+            // falakat is listavaalakitjuk
             foreach (var obs in obstacleLocations)
             {
-                state.ObstaclesOnMap.Add(new PointData { X = obs.Item1, Y = obs.Item2});
+                state.ObstaclesOnMap.Add(new PointData { X = obs.Item1, Y = obs.Item2 });
             }
 
+            // felugro ablak h hova mentsuk
             Microsoft.Win32.SaveFileDialog sfd = new Microsoft.Win32.SaveFileDialog();
             sfd.Filter = "Kincsvadászok mentés (*.sav)|*.sav";
-            sfd.FileName =  $"mentes_{DateTime.Now:MMdd_HHmm}";
+            sfd.FileName = $"mentes_{DateTime.Now:MMdd_HHmm}";
 
             if (sfd.ShowDialog() == true)
             {
                 try
                 {
+                    // szerializalas es iras
                     string json = System.Text.Json.JsonSerializer.Serialize(state);
                     System.IO.File.WriteAllText(sfd.FileName, json);
                     MessageBox.Show("Sikeres mentés!");
@@ -186,33 +200,34 @@ namespace Kincsvadaszok
             }
         }
 
+        // beolvassuk a kepeket h szep legyen a jatek
         private void LoadImages()
         {
             try
             {
-                // Try absolute pack URI first
+                // eloszor abszolut utvonallal probaljuk
                 var uri1 = new Uri("pack://application:,,,/Images/player1.png", UriKind.Absolute);
                 player1Img = new ImageBrush(new BitmapImage(uri1));
-                var uri2 = new Uri("pack://application:,,,/Images/player2.png",UriKind.Absolute);
+                var uri2 = new Uri("pack://application:,,,/Images/player2.png", UriKind.Absolute);
                 player2Img = new ImageBrush(new BitmapImage(uri2));
-                var uri3 = new Uri("pack://application:,,,/Images/loot.png",UriKind.Absolute);
+                var uri3 = new Uri("pack://application:,,,/Images/loot.png", UriKind.Absolute);
                 lootImg = new ImageBrush(new BitmapImage(uri3));
-                var uri4 = new Uri("pack://application:,,,/Images/cobblestone.jpg",UriKind.Absolute);
+                var uri4 = new Uri("pack://application:,,,/Images/cobblestone.jpg", UriKind.Absolute);
                 floorImg = new ImageBrush(new BitmapImage(uri4));
                 GameGrid.Background = floorImg;
-                var uri5 = new Uri("pack://application:,,,/Images/wall.jpg",UriKind.Absolute);
+                var uri5 = new Uri("pack://application:,,,/Images/wall.jpg", UriKind.Absolute);
                 wallImg = new ImageBrush(new BitmapImage(uri5));
             }
             catch
             {
-                // Fallback: try relative path
+                // ha nem megy akkor relativ utvonallal
                 try
                 {
                     var uri1 = new Uri("/Images/player1.png", UriKind.Relative);
                     player1Img = new ImageBrush(new BitmapImage(uri1));
-                    var uri2 = new Uri("/Images/player2.png",UriKind.Relative);
+                    var uri2 = new Uri("/Images/player2.png", UriKind.Relative);
                     player2Img = new ImageBrush(new BitmapImage(uri2));
-                    var uri3 = new Uri("Images/loot.png",UriKind.Relative);
+                    var uri3 = new Uri("Images/loot.png", UriKind.Relative);
                     lootImg = new ImageBrush(new BitmapImage(uri3));
                 }
                 catch
@@ -222,6 +237,7 @@ namespace Kincsvadaszok
             }
         }
 
+        // letrehozzuk a racsot a kepernyon
         private void InitializeMap()
         {
             mapCells = new Border[MapSize, MapSize];
@@ -241,6 +257,7 @@ namespace Kincsvadaszok
             }
         }
 
+        // random lerakjuk a kincseket
         private void SpawnTreasures()
         {
             int count = 0;
@@ -251,7 +268,7 @@ namespace Kincsvadaszok
 
                 bool isCorner = (rx == 0 && ry == 0) || (rx == MapSize - 1 && ry == MapSize - 1);
 
-                // MÓDOSÍTVA: Csak akkor rakjuk le, ha nincs ott FAL sem!
+                // modositva: csak akkor rakjuk le, ha nincs ott fal sem es nem sarok
                 if (!isCorner && !treasureLocations.ContainsKey((rx, ry)) && !obstacleLocations.Contains((rx, ry)))
                 {
                     Treasure t = new Treasure
@@ -265,7 +282,8 @@ namespace Kincsvadaszok
             }
         }
 
-        private void SpawnObstacles() // Falak lerakása
+        // falak random lerakasa
+        private void SpawnObstacles()
         {
             int count = 0;
             while (count < NumberOfObstacles)
@@ -273,9 +291,9 @@ namespace Kincsvadaszok
                 int rx = random.Next(MapSize);
                 int ry = random.Next(MapSize);
 
-                bool isStartPos = (rx == 0 && ry == 0) || (rx == MapSize - 1 && ry == MapSize - 1); //startpoziciokra nem rakunk falat 
+                bool isStartPos = (rx == 0 && ry == 0) || (rx == MapSize - 1 && ry == MapSize - 1); // startpoziciokra nem rakunk falat 
 
-                if (!isStartPos && !obstacleLocations.Contains((rx, ry))) //ha nem startpozi és még nincsen ott fal 
+                if (!isStartPos && !obstacleLocations.Contains((rx, ry))) // ha nem startpozi és még nincsen ott fal 
                 {
                     obstacleLocations.Add((rx, ry));
                     count++;
@@ -284,66 +302,69 @@ namespace Kincsvadaszok
             }
         }
 
-        // --- MOZGÁS ÉS KÖRÖK KEZELÉSE ---
+        // --- mozgas es korok kezelese ---
         private void GameWindow_KeyDown(object sender, KeyEventArgs e)
         {
+            // esc gombra kilepes
             if (e.Key == Key.Escape)
             {
                 this.Close();
                 return;
             }
 
-            // Meghatározzuk, ki a soros, és hol áll most
+            // meghatarozzuk, ki a soros, és hol all most
             int currentX = isPlayer1Turn ? p1X : p2X;
             int currentY = isPlayer1Turn ? p1Y : p2Y;
 
-            // Kiszámoljuk az új helyet
+            // kiszamoljuk az uj helyet
             int newX = currentX;
             int newY = currentY;
 
             if (isPlayer1Turn)
             {
+                // p1 csak a wasd gombokkal tud menni
                 switch (e.Key)
                 {
                     case Key.W: if (currentY > 0) newY--; break;
                     case Key.S: if (currentY < MapSize - 1) newY++; break;
                     case Key.A: if (currentX > 0) newX--; break;
                     case Key.D: if (currentX < MapSize - 1) newX++; break;
-                    default: return; // Ha P1 más gombot nyom (pl. nyilat), nem történik semmi
+                    default: return; // ha p1 mas gombot nyom (pl. nyilat), nem tortenik semmi
                 }
             }
             else
             {
-                // JÁTÉKOS 2 (Kék) -> CSAK NYILAK
+                // jatekos 2 (kek) -> csak nyilak
                 switch (e.Key)
                 {
                     case Key.Up: if (currentY > 0) newY--; break;
                     case Key.Down: if (currentY < MapSize - 1) newY++; break;
                     case Key.Left: if (currentX > 0) newX--; break;
                     case Key.Right: if (currentX < MapSize - 1) newX++; break;
-                    default: return; // Ha P2 más gombot nyom (pl. WASD), nem történik semmi
+                    default: return; // ha p2 mas gombot nyom (pl. wasd), nem tortenik semmi
                 }
             }
 
+            // falba nem mehetunk
             if (obstacleLocations.Contains((newX, newY)))
             {
                 return;
             }
 
-            // Ha nem mozdult (falnak ment), akkor nem váltunk kört, próbálja újra
+            // ha nem mozdult (falnak ment), akkor nem valtunk kort, probalja ujra
             if (newX == currentX && newY == currentY) return;
 
-            // Ha a másik játékosra akarna lépni, azt nem engedjük (ütközés)
+            // ha a masik jatekosra akarna lepni, azt nem engedjuk (utkozes)
             if (isPlayer1Turn && newX == p2X && newY == p2Y) return;
             if (!isPlayer1Turn && newX == p1X && newY == p1Y) return;
 
-            // --- LÉPÉS VÉGREHAJTÁSA ---
+            // --- lepes vegrehajtasa ---
 
-            // 1. Koordináták frissítése
+            // 1. koordinatak frissitese
             if (isPlayer1Turn) { p1X = newX; p1Y = newY; }
             else { p2X = newX; p2Y = newY; }
 
-            // 2. Kincs felvétele az adott játékosnak
+            // 2. kincs felvetele az adott jatekosnak
             if (treasureLocations.ContainsKey((newX, newY)))
             {
                 Treasure found = treasureLocations[(newX, newY)];
@@ -351,9 +372,10 @@ namespace Kincsvadaszok
                 if (isPlayer1Turn) LootP1.Add(found);
                 else LootP2.Add(found);
 
-                treasureLocations.Remove((newX, newY));
+                treasureLocations.Remove((newX, newY)); // levesszuk a palyarol
             }
 
+            // noveljuk a lepeseket es nezzuk a limitet
             totalSteps++;
 
             if (totalSteps >= MaxSteps)
@@ -367,75 +389,78 @@ namespace Kincsvadaszok
                 MessageBox.Show($"Lépéslimit {MaxSteps} elérve, a játék döntetelen!");
             }
 
-            // 3. Kör váltása (P1 -> P2, vagy P2 -> P1)
+            // 3. kor valtasa (p1 -> p2, vagy p2 -> p1)
             isPlayer1Turn = !isPlayer1Turn;
 
-            // 4. Képernyő frissítése
+            // 4. kepernyo frissitese
             RenderMap();
             UpdateStatus();
 
-            // 5. Játék vége ellenőrzés
+            // 5. jatek vege ellenorzes
             CheckGameOver();
         }
 
-        // Ez a függvény felelős azért, hogy minden kocka a megfelelő színű legyen
+        // ez a fuggveny felelos azert, hogy minden kocka a megfelelo szinu legyen
         private void RenderMap()
         {
             for (int y = 0; y < MapSize; y++)
             {
                 for (int x = 0; x < MapSize; x++)
                 {
-                    // 1. ALAPÉRTELMEZÉS: A padló képe (ha van), különben fekete
+                    // 1. alapertelmezes: a padlo kepe (ha van), kulonben fekete
                     Brush finalBrush = Brushes.Transparent;
 
-                    // 2. FAL (felülírja a padlót)
+                    // 2. fal (felulirja a padlot)
                     if (obstacleLocations.Contains((x, y)))
                     {
                         finalBrush = wallImg;
                     }
 
-                    // 3. KINCS (felülírja a padlót)
+                    // 3. kincs (felulirja a padlot)
                     if (treasureLocations.ContainsKey((x, y)))
                     {
                         finalBrush = (Brush)lootImg ?? Brushes.Gold;
                     }
 
-                    // 4. JÁTÉKOS 1 (felülír mindent)
+                    // 4. jatekos 1 (felulir mindent)
                     if (x == p1X && y == p1Y)
                     {
                         finalBrush = (Brush)player1Img ?? Brushes.LimeGreen;
                     }
 
-                    // 5. JÁTÉKOS 2 (felülír mindent)
+                    // 5. jatekos 2 (felulir mindent)
                     if (x == p2X && y == p2Y)
                     {
                         finalBrush = (Brush)player2Img ?? Brushes.Cyan;
                     }
 
-                    // VÉGSŐ RENDERELÉS
+                    // vegso rendereles
                     mapCells[y, x].Background = finalBrush;
                 }
             }
         }
 
+        // frissitjuk a felso szoveget az aktualis adatokkal
         private void UpdateStatus()
         {
             string turnName = isPlayer1Turn ? $"{name1} (Zöld)" : $"{name2} (Kék)";
             if (txtStatus != null)
             {
-                // Hozzáadtuk a végére a lépésszámlálót
+                // hozzaadtuk a vegere a lepesszamlalot
                 txtStatus.Text = $"KÖVETKEZIK: {turnName} | {name1}: {LootP1.Count} | {name2}: {LootP2.Count} | Pályán: {treasureLocations.Count} | LÉPÉSEK: {totalSteps}/{MaxSteps}";
             }
         }
 
+        // megnezzuk vege van e a jateknak
         private void CheckGameOver()
         {
             if (treasureLocations.Count == 0)
             {
                 isGameFinished = true;
-                // Kényszerített frissítés a legutolsó lépés kirajzolásához
+                // kenyszeritett frissites a legutolso lepes kirajzolasahoz
                 Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.Render);
 
+                // gyoztes kihirdetese a loot alapjan
                 string winner = "";
                 if (LootP1.Count > LootP2.Count) winner = "PLAYER 1 NYERT!";
                 else if (LootP2.Count > LootP1.Count) winner = "PLAYER 2 NYERT!";
