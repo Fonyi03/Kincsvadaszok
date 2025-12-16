@@ -53,6 +53,7 @@ Nincs szükség telepítésre!
 3.  Jó szórakozást!
 
 ## 👤 Szerző
-Készítette: **Fonyi03**
+Készítette: **FTP Server Room**
 Egyetemi Beadandó Projekt - 2025
+
 
