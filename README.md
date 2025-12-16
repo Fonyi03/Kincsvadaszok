@@ -2,7 +2,7 @@
 
 Egy körökre osztott, helyi többjátékos (hotseat) stratégiai játék, WPF technológiával megvalósítva. A játék célja több kincset gyűjteni az ellenfélnél egy akadályokkal teli, véletlenszerűen generált pályán.
 
-![Verzió](https://img.shields.io/badge/version-1.0-green)
+![Verzió](https://img.shields.io/badge/version-1.1-green)
 ![Nyelv](https://img.shields.io/badge/language-C%23-blue)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey)
 
@@ -55,3 +55,4 @@ Nincs szükség telepítésre!
 ## 👤 Szerző
 Készítette: **Fonyi03**
 Egyetemi Beadandó Projekt - 2025
+
