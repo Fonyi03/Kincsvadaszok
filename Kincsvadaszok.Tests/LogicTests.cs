@@ -1,27 +1,15 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Kincsvadaszok;
+﻿using Kincsvadaszok.Models;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Collections.Generic;
-using System.Linq;
+using System.Windows.Input;
 
 namespace Kincsvadaszok.Tests
 {
     [TestClass]
-    public class GameLogicTests 
+    public class LogicTests
     {
-        public string P1Name { get; set; }
-        public string P2Name { get; set; }
-        public int P1Score { get; set; }
-        public int P2Score { get; set; }
-        public string WinnerName { get; set; }
-        public System.DateTime Date { get; set; }
-
-        // Optionally, override ToString to support the test
-        public override string ToString()
-        {
-            return $"Győztes: {WinnerName.ToUpper()}\n{P1Name}: {P1Score}p\n{P2Name}: {P2Score}p\nDátum: {Date}";
-        }
-
-        // 1. Teszt: Kincs létrehozása
+        // --- 1. MODEL TESZT (Treasure) ---
+        // Ez ellenőrzi, hogy a Kincs osztály helyesen tárolja-e az adatokat
         [TestMethod]
         public void Treasure_Creation_ShouldStoreCorrectValues()
         {
@@ -37,48 +25,80 @@ namespace Kincsvadaszok.Tests
             Assert.AreEqual(expectedValue, t.Value);
         }
 
-        // 2. Teszt: GameResult kiírás formázása
+        // --- 2. LOGIKA TESZTEK (GameLogic) ---
+
+        // Mozgás tesztelése (W gomb -> Y csökken)
         [TestMethod]
-        public void GameResult_ToString_ShouldFormatCorrectly()
+        public void TestMovement_Up()
         {
-            // Arrange
-            var result = new GameLogicTests
-            {
-                P1Name = "Béla",
-                P2Name = "Kata",
-                P1Score = 100,
-                P2Score = 200,
-                WinnerName = "Kata",
-                Date = new System.DateTime(2023, 1, 1, 12, 0, 0)
-            };
+            var result = GameLogic.CalculateNewPosition(5, 5, Key.W, 10);
 
-            // Act
-            string output = result.ToString();
-
-            // Assert
-            StringAssert.Contains(output, "Győztes: KATA");
-            StringAssert.Contains(output, "Béla: 100p");
+            Assert.AreEqual(5, result.x);
+            Assert.AreEqual(4, result.y);
         }
 
-        // 3. Teszt: Győzelmi logika (ki nyert?)
+        // Pálya széle teszt (Bal felső sarokból nem mehetünk ki)
         [TestMethod]
-        public void ScoreCalculation_ShouldDetermineCorrectWinner()
+        public void TestMovement_Boundary_Top()
         {
-            // Arrange
-            List<Treasure> lootP1 = new List<Treasure> { new Treasure { Value = 100 } };
-            List<Treasure> lootP2 = new List<Treasure> { new Treasure { Value = 500 } };
+            var result = GameLogic.CalculateNewPosition(0, 0, Key.W, 10);
 
-            // Act
-            int score1 = lootP1.Sum(t => t.Value);
-            int score2 = lootP2.Sum(t => t.Value);
+            // Maradni kell 0-n
+            Assert.AreEqual(0, result.y);
+        }
 
-            string winner;
-            if (score1 > score2) winner = "Player 1";
-            else if (score2 > score1) winner = "Player 2";
-            else winner = "Draw";
+        // Pálya széle teszt (Jobb alsó sarokból nem mehetünk ki)
+        [TestMethod]
+        public void TestMovement_Boundary_Right()
+        {
+            var result = GameLogic.CalculateNewPosition(9, 9, Key.D, 10);
 
-            // Assert
-            Assert.AreEqual("Player 2", winner);
+            // Maradni kell 9-en
+            Assert.AreEqual(9, result.x);
+        }
+
+        // Falnak ütközés tesztelése
+        [TestMethod]
+        public void TestCollision_WithWall()
+        {
+            HashSet<(int, int)> walls = new HashSet<(int, int)>();
+            walls.Add((1, 1)); // Fal van az 1,1-en
+
+            // Megpróbálunk rálépni az 1,1-re. Ez NEM lehet érvényes.
+            // Fontos: Itt a GameLogic-ban nagybetűs IsValidMove-nak kell lennie!
+            bool isValid = GameLogic.isValidMove(1, 1, walls, 5, 5);
+
+            Assert.IsFalse(isValid);
+        }
+
+        // Másik játékosnak ütközés tesztelése
+        [TestMethod]
+        public void TestCollision_WithOtherPlayer()
+        {
+            HashSet<(int, int)> walls = new HashSet<(int, int)>();
+
+            // A másik játékos a 2,2-n áll, mi oda akarunk lépni
+            bool isValid = GameLogic.isValidMove(2, 2, walls, 2, 2);
+
+            Assert.IsFalse(isValid);
+        }
+
+        // Győztes tesztelése (Sima pontelőny)
+        [TestMethod]
+        public void TestWinner_Player1()
+        {
+            string winner = GameLogic.GetWinner(100, 50, "P1", "P2", false);
+            Assert.AreEqual("P1", winner);
+        }
+
+        // Döntetlen tesztelése (Lépéslimit)
+        [TestMethod]
+        public void TestWinner_DrawBySteps()
+        {
+            string winner = GameLogic.GetWinner(100, 50, "P1", "P2", true);
+
+            // Ez feltételezi, hogy a GameLogic-ban kijavítottad nagy 'L'-re a szöveget:
+            Assert.AreEqual("Döntetlen (Lépéslimit)", winner);
         }
     }
 }

@@ -305,102 +305,35 @@ namespace Kincsvadaszok
         // --- mozgas es korok kezelese ---
         private void GameWindow_KeyDown(object sender, KeyEventArgs e)
         {
-            // esc gombra kilepes
-            if (e.Key == Key.Escape)
-            {
-                this.Close();
-                return;
-            }
+            if (e.Key == Key.Escape) { this.Close(); return; }
 
-            // meghatarozzuk, ki a soros, és hol all most
             int currentX = isPlayer1Turn ? p1X : p2X;
             int currentY = isPlayer1Turn ? p1Y : p2Y;
 
-            // kiszamoljuk az uj helyet
-            int newX = currentX;
-            int newY = currentY;
+            // A másik játékos pozíciója (az ütközéshez kell)
+            int otherX = isPlayer1Turn ? p2X : p1X;
+            int otherY = isPlayer1Turn ? p2Y : p1Y;
 
-            if (isPlayer1Turn)
+            // --- 1. ÚJ POZÍCIÓ KISZÁMÍTÁSA (GameLogic használata) ---
+            // Figyeld meg: most már nem itt vannak az if-ek, hanem a GameLogic-ban!
+
+            // Szűrés: P1 csak WASD, P2 csak Nyilak
+            if (isPlayer1Turn && (e.Key == Key.Up || e.Key == Key.Down || e.Key == Key.Left || e.Key == Key.Right)) return;
+            if (!isPlayer1Turn && (e.Key == Key.W || e.Key == Key.S || e.Key == Key.A || e.Key == Key.D)) return;
+
+            var (newX, newY) = GameLogic.CalculateNewPosition(currentX, currentY, e.Key, MapSize);
+
+            // --- 2. ÉRVÉNYESSÉG ELLENŐRZÉSE (GameLogic használata) ---
+            if (!GameLogic.isValidMove(newX, newY, obstacleLocations, otherX, otherY))
             {
-                // p1 csak a wasd gombokkal tud menni
-                switch (e.Key)
-                {
-                    case Key.W: if (currentY > 0) newY--; break;
-                    case Key.S: if (currentY < MapSize - 1) newY++; break;
-                    case Key.A: if (currentX > 0) newX--; break;
-                    case Key.D: if (currentX < MapSize - 1) newX++; break;
-                    default: return; // ha p1 mas gombot nyom (pl. nyilat), nem tortenik semmi
-                }
-            }
-            else
-            {
-                // jatekos 2 (kek) -> csak nyilak
-                switch (e.Key)
-                {
-                    case Key.Up: if (currentY > 0) newY--; break;
-                    case Key.Down: if (currentY < MapSize - 1) newY++; break;
-                    case Key.Left: if (currentX > 0) newX--; break;
-                    case Key.Right: if (currentX < MapSize - 1) newX++; break;
-                    default: return; // ha p2 mas gombot nyom (pl. wasd), nem tortenik semmi
-                }
+                return; // Ha érvénytelen, nem lépünk
             }
 
-            // falba nem mehetunk
-            if (obstacleLocations.Contains((newX, newY)))
-            {
-                return;
-            }
-
-            // ha nem mozdult (falnak ment), akkor nem valtunk kort, probalja ujra
-            if (newX == currentX && newY == currentY) return;
-
-            // ha a masik jatekosra akarna lepni, azt nem engedjuk (utkozes)
-            if (isPlayer1Turn && newX == p2X && newY == p2Y) return;
-            if (!isPlayer1Turn && newX == p1X && newY == p1Y) return;
-
-            // --- lepes vegrehajtasa ---
-
-            // 1. koordinatak frissitese
-            if (isPlayer1Turn) { p1X = newX; p1Y = newY; }
-            else { p2X = newX; p2Y = newY; }
-
-            // 2. kincs felvetele az adott jatekosnak
-            if (treasureLocations.ContainsKey((newX, newY)))
-            {
-                Treasure found = treasureLocations[(newX, newY)];
-
-                if (isPlayer1Turn) LootP1.Add(found);
-                else LootP2.Add(found);
-
-                treasureLocations.Remove((newX, newY)); // levesszuk a palyarol
-            }
-
-            // noveljuk a lepeseket es nezzuk a limitet
-            totalSteps++;
-
-            if (totalSteps >= MaxSteps)
-            {
-                isGameFinished = true;
-                IsDrawBySteps = true;
-
-                RenderMap();
-                UpdateStatus();
-
-                MessageBox.Show($"Lépéslimit {MaxSteps} elérve, a játék döntetelen!");
-            }
-
-            // 3. kor valtasa (p1 -> p2, vagy p2 -> p1)
-            isPlayer1Turn = !isPlayer1Turn;
-
-            // 4. kepernyo frissitese
-            RenderMap();
-            UpdateStatus();
-
-            // 5. jatek vege ellenorzes
-            CheckGameOver();
+            if (newX == currentX && newY == currentY) return; // Ha nem mozdult
         }
 
-        // ez a fuggveny felelos azert, hogy minden kocka a megfelelo szinu legyen
+
+            // ez a fuggveny felelos azert, hogy minden kocka a megfelelo szinu legyen
         private void RenderMap()
         {
             for (int y = 0; y < MapSize; y++)
