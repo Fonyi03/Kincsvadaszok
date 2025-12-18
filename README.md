@@ -1,47 +1,59 @@
-# Kincsvadászok (Treasure Hunters) v1.0
+# 🏰 Kincsvadászok (Treasure Hunters) v1.0
 
-WPF alapú, helyi többjátékos (local multiplayer) stratégiai játék, egyedi grafikával és perzisztens adatmentéssel. A projekt demonstrálja a C# és WPF technológiák használatát, a JSON szerializációt, valamint az automatizált tesztelést.
+Egy körökre osztott, helyi többjátékos (hotseat) stratégiai játék, WPF technológiával megvalósítva. A játék célja több kincset gyűjteni az ellenfélnél egy akadályokkal teli, véletlenszerűen generált pályán.
 
-## 🚀 Újdonságok a v1.0 verzióban
-- **Teljes grafikai csomag:** Egyedi karakterek, kincsesláda ikonok és kőfal textúrák a színes négyzetek helyett.
-- **Okos mentés:** A felhasználó tallózhatja ki, hova és milyen néven szeretné menteni az eredményeket (`SaveFileDialog`).
-- **Single File Exe:** A program egyetlen hordozható .exe fájlként is futtatható.
-- **Akadályrendszer:** A pályán véletlenszerűen generált falak nehezítik a mozgást.
+![Verzió](https://img.shields.io/badge/version-1.1-green)
+![Nyelv](https://img.shields.io/badge/language-C%23-blue)
+![Platform](https://img.shields.io/badge/platform-Windows-lightgrey)
 
-## 🎮 Funkciók
+## ✨ Újdonságok a v1.1 verzióban
+* **Fejlett Játékállás Mentés:** A játék bezárásakor a program rákérdez a mentésre. A félbehagyott meccsek (`.sav` fájlok) később bármikor folytathatók pontosan onnan, ahol abbahagytátok.
+* **Grafikai Tuning:** Egyedi textúrák a padlóhoz és a falakhoz, karakter ikonok a színes négyzetek helyett.
+* **Szeparált Irányítás:** Külön gombkiosztás a két játékosnak (WASD vs Nyilak) a kényelmesebb játékélményért.
+* **Lépésszámláló & Döntetlen:** Ha a játékosok összesen 100 lépést tesznek meg, a játék automatikusan döntetlennel zárul (elkerülve a végtelen kergetőzést).
 
-### Játékmenet
-- **Lobby Rendszer:** Játékosok elnevezése indítás előtt.
-- **Kétjátékos Mód (Hotseat):** Körökre osztott játékmenet közös billentyűzeten.
-- **Dinamikus Pálya:** 10x10-es rács, véletlenszerű kincsekkel és akadályokkal.
-- **Pontozás:** A győzelem az összegyűjtött kincsek **értéke** alapján dől el.
+## 🎮 Játékmenet és Szabályok
 
-### Technikai Háttér
-- **Match History:** Eredmények (Dátum, Nyertes, Pontszámok) naplózása JSON formátumban.
-- **Unit Tesztek:** MSTest alapú tesztprojekt a kritikus üzleti logika (modellek, pontszámítás) ellenőrzésére.
-- **Resource Kezelés:** A képek és ikonok beágyazott erőforrásként utaznak a programmal.
+A játékot ketten játsszák egy billentyűzeten. A pálya egy 10x10-es rács, tele falakkal és kincsekkel.
 
-## 🕹 Így játssz
-1. **Lobby:** Írd be a **Játékos 1** (Zöld lovag) és **Játékos 2** (Kék varázsló) nevét.
-2. **Start:** Kattints a **JÁTÉK INDÍTÁSA** gombra.
-3. **Mozgás:** Használd a **Nyilakat** (Arrow Keys).
-   - A fejléc jelzi, kinek a köre van.
-   - A falakon (szürke kő) nem lehet átmenni.
-   - Lépj a kincsesládákra a begyűjtéshez.
-4. **Vége:** Ha elfogyott a kincs, a játék kihirdeti a győztest, és visszavisz a Lobby-ba.
-5. **Mentés:** Az "Előzmények Mentése" gombbal exportálhatod az eredményeket.
+### Irányítás
+| Játékos | Karakter | Mozgás |
+| :--- | :--- | :--- |
+| **Player 1** | 🟢 Zöld Felfedező | **W, A, S, D** |
+| **Player 2** | 🔵 Kék Felfedező | **Nyilak (⬆️⬇️⬅️➡️)** |
+| **Egyéb** | | **ESC** (Kilépés / Mentés) |
+
+### Szabályok
+1.  **Gyűjtés:** Lépj rá a kincsesládára a begyűjtéshez. Minden kincs véletlenszerű pontszámot ér.
+2.  **Akadályok:** A kőfalakon nem lehet átmenni.
+3.  **Ütközés:** Nem léphetsz arra a mezőre, ahol a másik játékos áll.
+4.  **Győzelem:**
+    * Ha elfogynak a kincsek, az nyer, akinek több pontja (értéke) van.
+    * Ha eléritek a **100. lépést**, a játék döntetlennel ér véget.
+
+## 💾 Funkciók
+
+* **Lobby Rendszer:** Játékosok elnevezése és meccselőzmények megtekintése.
+* **Match History:** A befejezett játékok eredményeit (Nyertes, Pontszámok, Dátum) a program JSON formátumban naplózza (`history.json`).
+* **Smart Save:** Kilépéskor (`ESC` vagy ablak bezárása) a rendszer felajánlja a játékállás mentését, amit a főmenü "JÁTÉK FOLYTATÁSA" gombjával tölthetsz vissza.
+* **Single File Exe:** A program egyetlen hordozható fájlként futtatható, nem igényel telepítést.
 
 ## 🛠 Technológiák
-- **Nyelv:** C# (.NET 9.0)
-- **UI:** WPF (Windows Presentation Foundation)
-- **Tesztelés:** MSTest Framework
-- **IDE:** Visual Studio 2022 Community
+A projekt demonstrálja a modern C# fejlesztési elveket:
+* **Nyelv:** C# (.NET 9.0)
+* **UI:** WPF (Windows Presentation Foundation) XAML alapokon.
+* **Adatkezelés:** `System.Text.Json` a mentésekhez és előzményekhez.
+* **Tesztelés:** MSTest keretrendszerrel írt Unit tesztek a logika (Modellek) ellenőrzésére.
 
-## 📦 Telepítés és Futtatás
-A program nem igényel telepítést.
-1. Töltsd le a `Kincsvadaszok.exe` fájlt a Releases oldalról (vagy a `bin/Release` mappából).
-2. Indítsd el.
-3. Jó játékot!
+## 🚀 Telepítés és Futtatás
+
+Nincs szükség telepítésre!
+1.  Töltsd le a legfrissebb `Kincsvadaszok.exe` fájlt a **Releases** menüpontból.
+2.  Indítsd el a fájlt.
+3.  Jó szórakozást!
 
 ## 👤 Szerző
-FTP Server Room
+Készítette: **FTP Server Room**
+Egyetemi Beadandó Projekt - 2025
+
+
