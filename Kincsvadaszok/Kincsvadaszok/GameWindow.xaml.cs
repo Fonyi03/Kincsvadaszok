@@ -330,6 +330,60 @@ namespace Kincsvadaszok
             }
 
             if (newX == currentX && newY == currentY) return; // Ha nem mozdult
+
+            // --- 3. LÉPÉS VÉGREHAJTÁSA ---
+            
+            // Koordináták frissítése
+            if (isPlayer1Turn) 
+            { 
+                p1X = newX; 
+                p1Y = newY; 
+            }
+            else 
+            {   
+                p2X = newX; 
+                p2Y = newY; 
+            }
+
+            // Kincs felvétele az adott játékosnak
+            if (treasureLocations.ContainsKey((newX, newY)))
+            {
+                Treasure found = treasureLocations[(newX, newY)];
+
+                if (isPlayer1Turn) 
+                    LootP1.Add(found);
+                else 
+                    LootP2.Add(found);
+
+                treasureLocations.Remove((newX, newY));
+            }
+
+            // Lépésszámláló növelése
+            totalSteps++;
+
+            // Ellenőrizzük, elértük-e a maximális lépésszámot
+            if (totalSteps >= MaxSteps)
+            {
+                isGameFinished = true;
+                IsDrawBySteps = true;
+                
+                Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.Render);
+                
+                string winner = GameLogic.GetWinner(LootP1.Count, LootP2.Count, name1, name2, true);
+                MessageBox.Show($"Vége a játéknak - elérted a maximum {MaxSteps} lépést!\n{winner}\n\n{name1} gyűjtött: {LootP1.Count}\n{name2} gyűjtött: {LootP2.Count}");
+                this.Close();
+                return;
+            }
+
+            // Kör váltása (P1 -> P2, vagy P2 -> P1)
+            isPlayer1Turn = !isPlayer1Turn;
+
+            // Képernyő frissítése
+            RenderMap();
+            UpdateStatus();
+
+            // Játék vége ellenőrzés
+            CheckGameOver();
         }
 
 

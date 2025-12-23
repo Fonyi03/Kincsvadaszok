@@ -11,7 +11,7 @@ namespace Kincsvadaszok.Models
     {
         public static (int x, int y) CalculateNewPosition(int currentX, int currentY, Key key, int mapSize) //kiszamolja hova lepne a jatekos
         {
-            int newX = currentY;
+            int newX = currentX;
             int newY = currentY;
 
             switch (key)
